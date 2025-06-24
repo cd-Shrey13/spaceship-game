@@ -18,7 +18,7 @@ body {
   position: absolute;
   height: 5rem;
   width: 5rem;
-  top: 0px;
+  bottom: 10px;
   left: 0px;
 }
 
@@ -30,4 +30,9 @@ body {
 .fireshot {
   height: 1rem;
   width: 1rem;
+}
+
+.explosion{
+    height: 3rem;
+  width: 3rem;
 }
