@@ -6,16 +6,17 @@ const windowWidth = window.visualViewport.width;
 
 const body = document.querySelector("body");
 
-body.addEventListener("mousemove", (e) => {
-  spaceShip.style.left = `${e.clientX}px`;
-  spaceShip.style.top = `${e.clientY}px`;
+body.addEventListener("touchmove", (e) => {
+  console.log(e);
+  spaceShip.style.left = `${e.targetTouches[0].clientX}px`;
+  spaceShip.style.top = `${e.targetTouches[0].clientY}px`;
 });
 
-body.addEventListener("click", (e) => launchFireshot(e));
+body.addEventListener("touchmove", (e) => launchFireshot(e));
 
 function createObstacle() {
   const obstacle = document.createElement("img");
-  obstacle.src = "/src/assets/rock (2).png";
+  obstacle.src = "rock (2).png";
   obstacle.setAttribute("class", "obstacle");
   obstacle.setAttribute("id", "obstacle");
   obstacle.style.position = "absolute";
@@ -46,7 +47,7 @@ function moveObstacle(obstacle, obstacleTopPosition) {
 
 function createFireShot() {
   const fireshot = document.createElement("img");
-  fireshot.src = "/src/assets/fire-shot.png";
+  fireshot.src = "fire-shot.png";
   fireshot.setAttribute("class", "fireshot");
   fireshot.setAttribute("id", "fireshot");
   fireshot.style.position = "absolute";
@@ -56,8 +57,8 @@ function createFireShot() {
 
 function launchFireshot(e) {
   const fireshot = createFireShot();
-  const fireshotTopPosition = e.clientY;
-  fireshot.style.left = `${e.clientX}px`;
+  const fireshotTopPosition = e.targetTouches[0].clientY;
+  fireshot.style.left = `${e.targetTouches[0].clientX}px`;
   fireshot.style.top = `${fireshotTopPosition}px`;
 
   body.appendChild(fireshot);
