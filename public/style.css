@@ -12,6 +12,20 @@ body {
   height: 100%;
   width: 100%;
   background-color: var(--color-space-background);
+  overflow: hidden;
+}
+
+body{
+  padding: 20px;
+}
+
+
+.playground{
+  height: 100%;
+  width: 100%;
+  background-color: #fff;
+  padding: 20px;
+  position: relative;
 }
 
 .space_ship {
@@ -20,19 +34,25 @@ body {
   width: 5rem;
   bottom: 10px;
   left: 0px;
+  border: 1px solid blue;
+
 }
 
 .obstacle {
   height: 3rem;
   width: 3rem;
+  border: 1px solid yellow;
+
 }
 
 .fireshot {
   height: 1rem;
   width: 1rem;
+  border: 1px solid green;
+
 }
 
 .explosion{
-    height: 3rem;
-  width: 3rem;
+    height: 4rem;
+  width: 5rem;
 }
