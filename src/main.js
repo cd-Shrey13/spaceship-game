@@ -9,19 +9,20 @@ const speedOfFireshot = 2;
 const windowWidth = window.visualViewport.width;
 const body = document.querySelector("body");
 const bodyCoords = body.getBoundingClientRect();
-const explosionSound = new Audio('/explosion3.ogg')
-const fireshotSound = new Audio('/laser3.ogg')
+const explosionSound = new Audio("/explosion3.ogg");
+const fireshotSound = new Audio("/laser3.ogg");
+
+const SCORE = 0;
+const SCORE_OFFSET = 100;
 
 let obstacleIntervalId;
 let fireshotIntervalId;
 
-
 window.onload = () => {
-    gameBackgroundMusic.play();
+  gameBackgroundMusic.play();
   gameBackgroundMusic.loop = true;
   gameStart();
-}
-
+};
 
 function gameStart() {
   spaceShip.addEventListener("touchmove", (e) => {
@@ -44,7 +45,9 @@ function createObstacle() {
 }
 
 function launchObstacle() {
-  const obstacleXCords = Math.round(Math.random() * windowWidth);
+  const obstacleXCords = Math.round(
+    playgroundCoords.left + Math.random() * playgroundCoords.width
+  );
   const obstacleTopPosition = 0;
   const obstacle = createObstacle();
   obstacle.style.left = `${obstacleXCords}px`;
@@ -70,7 +73,7 @@ function moveObstacle(obstacle, obstacleTopPosition) {
 
 function createFireShot() {
   const fireshot = document.createElement("img");
-  fireshot.src = "fire-shot.png";
+  fireshot.src = "fireshot.gif";
   fireshot.setAttribute("class", "fireshot");
   fireshot.setAttribute("id", "fireshot");
   fireshot.style.position = "absolute";
@@ -168,3 +171,12 @@ function gameOver() {
   gameOverSound.play();
 }
 
+function increaseScore() {
+  SCORE += SCORE_OFFSET;
+  return;
+}
+
+function resetScore() {
+  SCORE = 0;
+  return;
+}
