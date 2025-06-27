@@ -1,147 +1,270 @@
+// ==========================\n// Game Constants & Variables\n// ==========================
 const gameBackgroundMusic = new Audio("/music.mp3");
 const gameOverSound = new Audio("/gameover.wav");
-const spaceShip = document.getElementById("space-ship");
-const spaceshipCoords = spaceShip.getBoundingClientRect();
-const playground = document.getElementById("playground");
-const playgroundCoords = playground.getBoundingClientRect();
-const speedOfObstacle = 1;
-const speedOfFireshot = 2;
-const windowWidth = window.visualViewport.width;
-const body = document.querySelector("body");
-const bodyCoords = body.getBoundingClientRect();
 const explosionSound = new Audio("/explosion3.ogg");
 const fireshotSound = new Audio("/laser3.ogg");
 
-const SCORE = 0;
+const spaceShip = document.getElementById("space-ship");
+const playground = document.getElementById("playground");
+const body = document.querySelector("body");
+const scoreBoard = document.getElementById("score-board");
+const gameoverDialog = document.getElementById("game-over-dialog");
+
+let SCORE = 0;
 const SCORE_OFFSET = 100;
+let DIFFICULTY_INCREASE_DELAY = 20000;
+let OBSTACLE_SPAWN_DELAY = 5000;
+let OBSTACLE_SPAWN_DELAY_OFFSET = 1000;
+let OBSTACLE_SPEED = 1;
+const speedOfFireshot = 2;
 
-let obstacleIntervalId;
-let fireshotIntervalId;
+let obstacleIntervalId = null;
+let difficultyInvervalId = null;
+let fireLoopId = null;
+let isFiring = false;
+let isDragging = false;
 
+// ==========================\n// Game Initialization\n// ==========================
 window.onload = () => {
-  gameBackgroundMusic.play();
-  gameBackgroundMusic.loop = true;
+  // gameBackgroundMusic.play();
+  // gameBackgroundMusic.loop = true;
   gameStart();
 };
 
 function gameStart() {
-  spaceShip.addEventListener("touchmove", (e) => {
-    spaceShip.style.left = `${e.targetTouches[0].clientX}px`;
-  });
-  obstacleIntervalId = setInterval(launchObstacle, 3000);
-  fireshotIntervalId = setInterval(launchFireshot, 500);
+  resetGameStats();
+  setupTouchControls();
+  setupMouseControls();
+  setupKeyboardControls();
+  setupFiringControls();
+  displayScore();
+  obstacleIntervalId = setInterval(launchObstacle, OBSTACLE_SPAWN_DELAY);
+  difficultyInvervalId = setInterval(
+    difficultyIncrease,
+    DIFFICULTY_INCREASE_DELAY
+  );
 }
 
-// body.addEventListener("touchmove", (e) => launchFireshot(e));
+function resetGameStats() {
+  SCORE = 0;
+  DIFFICULTY_INCREASE_DELAY = 20000;
+  OBSTACLE_SPAWN_DELAY = 5000;
+  OBSTACLE_SPAWN_DELAY_OFFSET = 1000;
+  OBSTACLE_SPEED = 1;
+  return;
+}
 
+// ==========================\n// User Input Handlers\n// ==========================
+function setupTouchControls() {
+  spaceShip.addEventListener("touchmove", (e) => {
+    const touchX = e.targetTouches[0].clientX;
+    const playgroundRect = playground.getBoundingClientRect();
+    const shipRect = spaceShip.getBoundingClientRect();
+    const shipHalfWidth = shipRect.width / 2;
+
+    const x = e.clientX - playgroundRect.left; // Mouse X inside playground
+    const clampedX = Math.max(
+      shipHalfWidth,
+      Math.min(playgroundRect.width - shipHalfWidth, x)
+    );
+    spaceShip.style.left = `${clampedX - shipHalfWidth}px`;
+  });
+}
+
+function setupMouseControls() {
+  spaceShip.addEventListener("mousedown", () => (isDragging = true));
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const playgroundRect = playground.getBoundingClientRect();
+    const shipRect = spaceShip.getBoundingClientRect();
+    const shipHalfWidth = shipRect.width / 2;
+
+    const x = e.clientX - playgroundRect.left; // Mouse X inside playground
+    const clampedX = Math.max(
+      shipHalfWidth,
+      Math.min(playgroundRect.width - shipHalfWidth, x)
+    );
+    spaceShip.style.left = `${clampedX - shipHalfWidth}px`;
+  });
+
+  document.addEventListener("mouseup", () => (isDragging = false));
+}
+
+function setupKeyboardControls() {
+  document.addEventListener("keydown", (e) => {
+    const moveStep = 20;
+    const playgroundRect = playground.getBoundingClientRect();
+    const shipRect = spaceShip.getBoundingClientRect();
+
+    if (e.code === "ArrowLeft") {
+      let newLeft = shipRect.left - moveStep - playgroundRect.left;
+      newLeft = Math.max(newLeft, 0);
+      spaceShip.style.left = `${newLeft}px`;
+    }
+
+    if (e.code === "ArrowRight") {
+      let newLeft = shipRect.left + moveStep - playgroundRect.left;
+      newLeft = Math.min(newLeft, playgroundRect.width - shipRect.width);
+      spaceShip.style.left = `${newLeft}px`;
+    }
+
+    if (e.code === "Space") {
+      launchFireshot();
+    }
+  });
+}
+
+function setupFiringControls() {
+  spaceShip.addEventListener("touchstart", startFiring);
+  spaceShip.addEventListener("mousedown", startFiring);
+  document.addEventListener("touchend", stopFiring);
+  document.addEventListener("mouseup", stopFiring);
+}
+
+function startFiring() {
+  if (isFiring) return;
+  isFiring = true;
+  fireLoopId = setInterval(() => launchFireshot(), 500);
+}
+
+function stopFiring() {
+  isFiring = false;
+  clearInterval(fireLoopId);
+}
+
+gameoverDialog.addEventListener("click", () => {
+  gameoverDialog.style.visibility = "hidden";
+  gameStart();
+});
+
+// ==========================\n// Game Object Creation\n// ==========================
 function createObstacle() {
   const obstacle = document.createElement("img");
   obstacle.src = "rock (2).png";
-  obstacle.setAttribute("class", "obstacle");
-  obstacle.setAttribute("id", "obstacle");
+  obstacle.classList.add("obstacle");
   obstacle.style.position = "absolute";
-
   return obstacle;
-}
-
-function launchObstacle() {
-  const obstacleXCords = Math.round(
-    playgroundCoords.left + Math.random() * playgroundCoords.width
-  );
-  const obstacleTopPosition = 0;
-  const obstacle = createObstacle();
-  obstacle.style.left = `${obstacleXCords}px`;
-
-  body.appendChild(obstacle);
-  moveObstacle(obstacle, obstacleTopPosition);
-}
-
-function moveObstacle(obstacle, obstacleTopPosition) {
-  if (detectCollisionWithSpaceship()) {
-    gameOver();
-  }
-
-  obstacleTopPosition += speedOfObstacle;
-  obstacle.style.top = `${obstacleTopPosition}px`;
-  if (obstacleTopPosition > bodyCoords.height) {
-    obstacle.remove();
-  }
-  requestAnimationFrame(() => {
-    moveObstacle(obstacle, obstacleTopPosition);
-  });
 }
 
 function createFireShot() {
   const fireshot = document.createElement("img");
   fireshot.src = "fireshot.gif";
-  fireshot.setAttribute("class", "fireshot");
-  fireshot.setAttribute("id", "fireshot");
+  fireshot.classList.add("fireshot");
   fireshot.style.position = "absolute";
-
   return fireshot;
 }
 
+// ==========================\n// Game Logic\n// ==========================
+function launchObstacle() {
+  let obstacleTopPosition = 0;
+  const obstacle = createObstacle();
+
+  const playgroundRect = playground.getBoundingClientRect();
+  playground.appendChild(obstacle);
+
+  const obstacleWidth = obstacle.getBoundingClientRect().width;
+  const maximumX = playgroundRect.width - obstacleWidth;
+  const randomX = Math.random() * maximumX;
+
+  obstacle.style.left = `${randomX}px`;
+  // obstacle.style.top= `0px`
+  moveObstacle(obstacle, obstacleTopPosition);
+}
+
+function moveObstacle(obstacle, obstacleTopPosition) {
+  if (!document.body.contains(obstacle)) return;
+
+  obstacleTopPosition += OBSTACLE_SPEED;
+  obstacle.style.top = `${obstacleTopPosition}px`;
+
+  if (checkSpaceshipCollision()) {
+    gameOver();
+    return;
+  }
+
+  const playgroundRect = playground.getBoundingClientRect();
+  if (obstacleTopPosition >= playgroundRect.bottom) {
+    obstacle.remove();
+    return;
+  }
+
+  requestAnimationFrame(() => moveObstacle(obstacle, obstacleTopPosition));
+}
+
 function launchFireshot() {
+  const playgroundRect = playground.getBoundingClientRect();
+  const shipCoords = spaceShip.getBoundingClientRect();
+
+  const relX = shipCoords.left - playgroundRect.left;
+  const relY = shipCoords.top - playgroundRect.top;
+
   const fireshot = createFireShot();
+  fireshot.style.left = `${relX + shipCoords.width / 2}px`;
+  fireshot.style.top = `${relY}px`;
 
-  const spaceshipCoords = spaceShip.getBoundingClientRect();
-  const fireshotTopPosition = spaceshipCoords.top - spaceshipCoords.height / 2;
-  fireshot.style.left = `${spaceshipCoords.left + spaceshipCoords.width / 2}px`;
-  // fireshot.style.top = `${spaceshipCoords.top + spaceshipCoords.height / 2}px`;
-
-  body.appendChild(fireshot);
-  // fireshotSound.play();
-  moveFireshot(fireshot, fireshotTopPosition);
+  playground.appendChild(fireshot);
+  moveFireshot(fireshot, relY);
 }
 
 function moveFireshot(fireshot, fireshotTopPosition) {
-  if (detectCollisionWithObstacle()) {
-    alert("Game Over!");
-    return;
-  }
+  if (!document.body.contains(fireshot)) return;
+
   fireshotTopPosition -= speedOfFireshot;
   fireshot.style.top = `${fireshotTopPosition}px`;
-  if (fireshotTopPosition < 0) {
+
+  const hit = checkObstacleCollision(fireshot);
+  if (hit) {
+    showExplosion(hit, fireshot);
+    increaseScore();
+    return;
+  }
+
+  const playgroundRect = playground.getBoundingClientRect();
+  if (fireshotTopPosition <= playgroundRect.top) {
     fireshot.remove();
     return;
   }
-  requestAnimationFrame(() => {
-    moveFireshot(fireshot, fireshotTopPosition);
-  });
+
+  requestAnimationFrame(() => moveFireshot(fireshot, fireshotTopPosition));
 }
 
-function detectCollisionWithObstacle() {
-  const obstacles = document.querySelectorAll(".obstacle");
-  const fireshots = document.querySelectorAll(".fireshot");
-  for (let i = 0; i < obstacles.length; i++) {
-    for (let j = 0; j < fireshots.length; j++) {
-      const obstacleRect = obstacles[i].getBoundingClientRect();
-      const fireshotRect = fireshots[j].getBoundingClientRect();
+function showExplosion(obstacle, fireshot) {
+  fireshot.remove();
+  obstacle.src = `exposion.png`;
+  setTimeout(() => obstacle.remove(), 100);
+}
 
-      if (
-        obstacleRect.left < fireshotRect.right &&
-        obstacleRect.right > fireshotRect.left &&
-        obstacleRect.top < fireshotRect.bottom &&
-        obstacleRect.bottom > fireshotRect.top
-      ) {
-        explosionSound.play();
-        showExplosion(obstacles[i], fireshots[j]);
-      }
+// ==========================\n// Collision Detection\n// ==========================
+function checkObstacleCollision(fireshot) {
+  const shotRect = fireshot.getBoundingClientRect();
+  const obstacles = document.querySelectorAll(".obstacle");
+
+  for (const obstacle of obstacles) {
+    const obsRect = obstacle.getBoundingClientRect();
+    if (
+      obsRect.left < shotRect.right &&
+      obsRect.right > shotRect.left &&
+      obsRect.top < shotRect.bottom &&
+      obsRect.bottom > shotRect.top
+    ) {
+      return obstacle;
     }
   }
+  return null;
 }
-function detectCollisionWithSpaceship() {
+
+function checkSpaceshipCollision() {
   const obstacles = document.querySelectorAll(".obstacle");
-  const spaceshipRect = spaceShip.getBoundingClientRect();
+  const shipRect = spaceShip.getBoundingClientRect();
 
-  for (let i = 0; i < obstacles.length; i++) {
-    const obstacleRect = obstacles[i].getBoundingClientRect();
-
+  for (const obs of obstacles) {
+    const obsRect = obs.getBoundingClientRect();
     if (
-      obstacleRect.left < spaceshipRect.right &&
-      obstacleRect.right > spaceshipRect.left &&
-      obstacleRect.top < spaceshipRect.bottom &&
-      obstacleRect.bottom > spaceshipRect.top
+      obsRect.left < shipRect.right &&
+      obsRect.right > shipRect.left &&
+      obsRect.top < shipRect.bottom &&
+      obsRect.bottom > shipRect.top
     ) {
       return true;
     }
@@ -149,34 +272,46 @@ function detectCollisionWithSpaceship() {
   return false;
 }
 
-function showExplosion(obstacle, fireshot) {
-  fireshot.remove();
-  obstacle.src = `exposion.png`;
-  setTimeout(() => {
-    obstacle.remove();
-  }, 100);
-}
-
+// ==========================\n// Game State Management\n// ==========================
 function gameOver() {
-  document.querySelectorAll(".obstacle").forEach((obstacle) => {
-    obstacle.remove();
-  });
-  document.querySelectorAll(".fireshot").forEach((fireshot) => {
-    fireshot.remove();
-  });
-  spaceShip.remove();
-  clearInterval(fireshotIntervalId);
-  clearInterval(obstacleIntervalId);
-  gameBackgroundMusic.pause();
+  document.querySelectorAll(".obstacle").forEach((el) => el.remove());
+  document.querySelectorAll(".fireshot").forEach((el) => el.remove());
   gameOverSound.play();
+  gameoverDialog.style.visibility = "visible";
+  clearInterval(fireLoopId);
+  clearInterval(obstacleIntervalId);
+  clearInterval(difficultyInvervalId);
+  gameBackgroundMusic.pause();
+  // TODO: Add Game Over Screen or Restart Option
 }
 
+// ==========================\n// Score & Difficulty System\n// ==========================
 function increaseScore() {
   SCORE += SCORE_OFFSET;
+  displayScore();
   return;
+  // TODO: Update score display in UI
 }
 
 function resetScore() {
   SCORE = 0;
+  displayScore();
   return;
+  // TODO: Reset score display in UI
+}
+
+function displayScore() {
+  scoreBoard.innerText = `${SCORE}`;
+  return;
+}
+
+function difficultyIncrease() {
+  if (OBSTACLE_SPAWN_DELAY == 2000) {
+    OBSTACLE_SPAWN_DELAY_OFFSET = 500;
+  }
+  if (OBSTACLE_SPAWN_DELAY == 1000) {
+    OBSTACLE_SPAWN_DELAY_OFFSET = 100;
+  }
+  OBSTACLE_SPAWN_DELAY -= OBSTACLE_SPAWN_DELAY_OFFSET;
+  OBSTACLE_SPEED++;
 }

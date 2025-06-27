@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="style.css" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/spaceship.gif" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0 "
@@ -13,9 +19,13 @@
   </head>
   <body>
     <audio src="/music.mp3" id="bgm" loop="true" autoplay="true"></audio>
+    <div id="score-board" class="score_board"></div>
     <div class="playground" id="playground">
-      <div class="space_background">   </div>
+      <div class="space_background"></div>
       <img id="space-ship" class="space_ship" src="spaceship.gif" />
+    </div>
+    <div id="game-over-dialog" class="gameover_dialog">GAME OVER
+      <img src="/playagain.png" alt="playagain icon" class="gameover_icon">
     </div>
     <!-- <div class="score_board" id="score_board"></div> -->
     <script type="module" src="src/main.js"></script>

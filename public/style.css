@@ -15,38 +15,50 @@ body {
 }
 
 body {
-  /* padding: 20px; */
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: black; /* or a solid fallback */
 }
 
 .playground {
-  height: 100%;
-  min-width: 100%;
-  max-width: 900px;
-  /* padding: 20px; */
+  height: 700px;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
   position: relative;
   overflow: hidden;
-  object-fit: cover;
+  background: url("/Space Background.png") repeat;
+  background-size: cover;
+  border-radius: 1.5rem;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
 }
 
-.score_board{
-  height: 5rem;
-  width: 15rem;
+.score_board {
+  height: 3.5rem;
+  width: 8rem;
+  z-index: 1000;
+  font-size: 1.5rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
-  top:1rem;
+  top: 1rem;
   right: 1rem;
-  border: 1px solid red;
-  border-radius: 12px;
-  background-color: #fff;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #000;
+  font-family: "Press Start 2P", system-ui;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  user-select: none;
 }
 
 .space_background {
   --imageHeight: 1200px;
   width: 100%;
   background: url("/Space\ Background.png") repeat;
-   height: calc(var(--imageHeight) * 2);
+  height: calc(var(--imageHeight) * 2);
   animation: slide 60s linear infinite;
 }
 
@@ -56,31 +68,56 @@ body {
   width: 5rem;
   bottom: 10px;
   left: 0px;
+  z-index: 10000;
   /* border: 1px solid blue; */
 }
 
 .obstacle {
   height: 3rem;
   width: 3rem;
+  z-index: 10000;
+
   /* border: 1px solid yellow; */
 }
 
 .fireshot {
   height: 2rem;
   width: 2rem;
+  z-index: 5;
+
   /* border: 1px solid green; */
 }
 
 .explosion {
   height: 4rem;
   width: 5rem;
+  z-index: 5;
 }
 
-@keyframes slide { 
+@keyframes slide {
   from {
     transform: translateY(calc(var(--imageHeight) * -1));
   }
   to {
-    transform: translateY(0px)
+    transform: translateY(0px);
   }
+}
+
+.gameover_dialog {
+  visibility: hidden;
+  color: gray;
+  padding: 1rem;
+  position: absolute;
+  z-index: 6;
+  font-family: "Press Start 2P", system-ui;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.gameover_icon {
+  height: 3rem;
+  width: 3rem;
 }
