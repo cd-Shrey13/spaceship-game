@@ -1,8 +1,10 @@
-// ==========================\n// Game Constants & Variables\n// ==========================
+// ==========================
+// Game Constants & Variables
+// ==========================
 const gameBackgroundMusic = new Audio("/music.mp3");
 const gameOverSound = new Audio("/gameover.wav");
 const explosionSound = new Audio("/explosion3.ogg");
-const fireshotSound = new Audio("/laser3.ogg");
+const fireshotSound = new Audio("/laser1.ogg");
 
 const spaceShip = document.getElementById("space-ship");
 const playground = document.getElementById("playground");
@@ -24,37 +26,16 @@ let fireLoopId = null;
 let isFiring = false;
 let isDragging = false;
 
-// ==========================\n// Game Initialization\n// ==========================
+// ==========================
+// Game Initialization
+// ==========================
 window.onload = () => {
-  // gameBackgroundMusic.play();
-  // gameBackgroundMusic.loop = true;
   gameStart();
 };
 
-function gameStart() {
-  resetGameStats();
-  setupTouchControls();
-  setupMouseControls();
-  setupKeyboardControls();
-  setupFiringControls();
-  displayScore();
-  obstacleIntervalId = setInterval(launchObstacle, OBSTACLE_SPAWN_DELAY);
-  difficultyInvervalId = setInterval(
-    difficultyIncrease,
-    DIFFICULTY_INCREASE_DELAY
-  );
-}
-
-function resetGameStats() {
-  SCORE = 0;
-  DIFFICULTY_INCREASE_DELAY = 20000;
-  OBSTACLE_SPAWN_DELAY = 5000;
-  OBSTACLE_SPAWN_DELAY_OFFSET = 1000;
-  OBSTACLE_SPEED = 1;
-  return;
-}
-
-// ==========================\n// User Input Handlers\n// ==========================
+// ==========================
+// User Input Handlers
+// ==========================
 function setupTouchControls() {
   spaceShip.addEventListener("touchmove", (e) => {
     const touchX = e.targetTouches[0].clientX;
@@ -65,30 +46,10 @@ function setupTouchControls() {
     const x = e.clientX - playgroundRect.left; // Mouse X inside playground
     const clampedX = Math.max(
       shipHalfWidth,
-      Math.min(playgroundRect.width - shipHalfWidth, x)
+      Math.min(playgroundRect.width - shipHalfWidth, touchX)
     );
     spaceShip.style.left = `${clampedX - shipHalfWidth}px`;
   });
-}
-
-function setupMouseControls() {
-  spaceShip.addEventListener("mousedown", () => (isDragging = true));
-
-  document.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    const playgroundRect = playground.getBoundingClientRect();
-    const shipRect = spaceShip.getBoundingClientRect();
-    const shipHalfWidth = shipRect.width / 2;
-
-    const x = e.clientX - playgroundRect.left; // Mouse X inside playground
-    const clampedX = Math.max(
-      shipHalfWidth,
-      Math.min(playgroundRect.width - shipHalfWidth, x)
-    );
-    spaceShip.style.left = `${clampedX - shipHalfWidth}px`;
-  });
-
-  document.addEventListener("mouseup", () => (isDragging = false));
 }
 
 function setupKeyboardControls() {
@@ -138,7 +99,9 @@ gameoverDialog.addEventListener("click", () => {
   gameStart();
 });
 
-// ==========================\n// Game Object Creation\n// ==========================
+// ==========================
+// Game Object Creation
+// ==========================
 function createObstacle() {
   const obstacle = document.createElement("img");
   obstacle.src = "rock (2).png";
@@ -155,7 +118,9 @@ function createFireShot() {
   return fireshot;
 }
 
-// ==========================\n// Game Logic\n// ==========================
+// ==========================
+// Game Logic
+// ==========================
 function launchObstacle() {
   let obstacleTopPosition = 0;
   const obstacle = createObstacle();
@@ -168,7 +133,6 @@ function launchObstacle() {
   const randomX = Math.random() * maximumX;
 
   obstacle.style.left = `${randomX}px`;
-  // obstacle.style.top= `0px`
   moveObstacle(obstacle, obstacleTopPosition);
 }
 
@@ -203,6 +167,7 @@ function launchFireshot() {
   fireshot.style.left = `${relX + shipCoords.width / 2}px`;
   fireshot.style.top = `${relY}px`;
 
+  fireshotSound.play();
   playground.appendChild(fireshot);
   moveFireshot(fireshot, relY);
 }
@@ -230,12 +195,15 @@ function moveFireshot(fireshot, fireshotTopPosition) {
 }
 
 function showExplosion(obstacle, fireshot) {
+  explosionSound.play();
   fireshot.remove();
   obstacle.src = `exposion.png`;
   setTimeout(() => obstacle.remove(), 100);
 }
 
-// ==========================\n// Collision Detection\n// ==========================
+// ==========================
+// Collision Detection
+// ==========================
 function checkObstacleCollision(fireshot) {
   const shotRect = fireshot.getBoundingClientRect();
   const obstacles = document.querySelectorAll(".obstacle");
@@ -272,8 +240,11 @@ function checkSpaceshipCollision() {
   return false;
 }
 
-// ==========================\n// Game State Management\n// ==========================
+// ==========================
+//  Game State Management
+// ==========================
 function gameOver() {
+  gameBackgroundMusic.pause();
   document.querySelectorAll(".obstacle").forEach((el) => el.remove());
   document.querySelectorAll(".fireshot").forEach((el) => el.remove());
   gameOverSound.play();
@@ -281,23 +252,43 @@ function gameOver() {
   clearInterval(fireLoopId);
   clearInterval(obstacleIntervalId);
   clearInterval(difficultyInvervalId);
-  gameBackgroundMusic.pause();
-  // TODO: Add Game Over Screen or Restart Option
 }
 
-// ==========================\n// Score & Difficulty System\n// ==========================
+function gameStart() {
+  resetGameStats();
+  setupTouchControls();
+  setupKeyboardControls();
+  setupFiringControls();
+  displayScore();
+  obstacleIntervalId = setInterval(launchObstacle, OBSTACLE_SPAWN_DELAY);
+  difficultyInvervalId = setInterval(
+    difficultyIncrease,
+    DIFFICULTY_INCREASE_DELAY
+  );
+}
+
+function resetGameStats() {
+  SCORE = 0;
+  DIFFICULTY_INCREASE_DELAY = 20000;
+  OBSTACLE_SPAWN_DELAY = 5000;
+  OBSTACLE_SPAWN_DELAY_OFFSET = 1000;
+  OBSTACLE_SPEED = 1;
+  return;
+}
+
+// ==========================
+//  Score & Difficulty System
+// ==========================
 function increaseScore() {
   SCORE += SCORE_OFFSET;
   displayScore();
   return;
-  // TODO: Update score display in UI
 }
 
 function resetScore() {
   SCORE = 0;
   displayScore();
   return;
-  // TODO: Reset score display in UI
 }
 
 function displayScore() {
